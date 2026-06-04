@@ -1,0 +1,2289 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Hack-Flow API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: auth
+  - name: users
+  - name: hackathons
+  - name: teams
+  - name: projects
+  - name: matchmaking
+  - name: evaluation
+  - name: tickets
+  - name: chat
+  - name: analytics
+  - name: portfolios
+  - name: anthropic
+    description: Anthropic AI chat operations
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # USERS
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+        - name: hackathonId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}/toggle-status:
+    patch:
+      operationId: toggleUserStatus
+      tags: [users]
+      summary: Admin toggle user active/banned status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # HACKATHONS
+  /hackathons:
+    get:
+      operationId: listHackathons
+      tags: [hackathons]
+      summary: List hackathons
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Hackathon list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HackathonListResponse"
+    post:
+      operationId: createHackathon
+      tags: [hackathons]
+      summary: Create hackathon
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HackathonInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hackathon"
+
+  /hackathons/{id}:
+    get:
+      operationId: getHackathon
+      tags: [hackathons]
+      summary: Get hackathon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Hackathon
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hackathon"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateHackathon
+      tags: [hackathons]
+      summary: Update hackathon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HackathonUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hackathon"
+    delete:
+      operationId: deleteHackathon
+      tags: [hackathons]
+      summary: Delete hackathon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /hackathons/{id}/register:
+    post:
+      operationId: registerForHackathon
+      tags: [hackathons]
+      summary: Register current user for hackathon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /hackathons/{id}/assign-role:
+    post:
+      operationId: assignHackathonRole
+      tags: [hackathons]
+      summary: Assign mentor or jury to a hackathon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignRoleInput"
+      responses:
+        "200":
+          description: Role assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /hackathons/{id}/milestones:
+    get:
+      operationId: getHackathonMilestones
+      tags: [hackathons]
+      summary: Get hackathon milestones/timeline
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Milestones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Milestone"
+    post:
+      operationId: createMilestone
+      tags: [hackathons]
+      summary: Create milestone
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MilestoneInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Milestone"
+
+  /hackathons/{id}/criteria:
+    get:
+      operationId: getEvaluationCriteria
+      tags: [evaluation]
+      summary: Get evaluation criteria for a hackathon
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Criteria list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EvaluationCriterion"
+    post:
+      operationId: createEvaluationCriterion
+      tags: [evaluation]
+      summary: Create evaluation criterion
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationCriterionInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvaluationCriterion"
+
+  # TEAMS
+  /hackathons/{hackathonId}/teams:
+    get:
+      operationId: listTeams
+      tags: [teams]
+      summary: List teams in a hackathon
+      parameters:
+        - name: hackathonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Team"
+    post:
+      operationId: createTeam
+      tags: [teams]
+      summary: Create a team
+      parameters:
+        - name: hackathonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+
+  /teams/{id}:
+    get:
+      operationId: getTeam
+      tags: [teams]
+      summary: Get team details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Team
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+    patch:
+      operationId: updateTeam
+      tags: [teams]
+      summary: Update team
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+
+  /teams/{id}/invite:
+    post:
+      operationId: inviteToTeam
+      tags: [teams]
+      summary: Invite user to team
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TeamInviteInput"
+      responses:
+        "200":
+          description: Invited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamInvitation"
+
+  /team-invitations/{id}/respond:
+    post:
+      operationId: respondToInvitation
+      tags: [teams]
+      summary: Accept or decline team invitation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvitationResponse"
+      responses:
+        "200":
+          description: Responded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /teams/{id}/leave:
+    post:
+      operationId: leaveTeam
+      tags: [teams]
+      summary: Leave a team
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Left
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # MATCHMAKING
+  /hackathons/{hackathonId}/matchmaking/candidates:
+    get:
+      operationId: getMatchCandidates
+      tags: [matchmaking]
+      summary: Get AI-scored team match candidates
+      parameters:
+        - name: hackathonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Match candidates with scores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MatchCandidate"
+
+  /hackathons/{hackathonId}/matchmaking/swipe:
+    post:
+      operationId: swipeCandidate
+      tags: [matchmaking]
+      summary: Swipe left or right on a match candidate
+      parameters:
+        - name: hackathonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SwipeInput"
+      responses:
+        "200":
+          description: Swiped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  # PROJECTS
+  /hackathons/{hackathonId}/projects:
+    get:
+      operationId: listProjects
+      tags: [projects]
+      summary: List submitted projects in a hackathon
+      parameters:
+        - name: hackathonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+
+  /projects:
+    post:
+      operationId: submitProject
+      tags: [projects]
+      summary: Submit a project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectInput"
+      responses:
+        "201":
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}:
+    get:
+      operationId: getProject
+      tags: [projects]
+      summary: Get project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+    patch:
+      operationId: updateProject
+      tags: [projects]
+      summary: Update project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProjectUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+
+  /projects/{id}/evaluate:
+    post:
+      operationId: evaluateProject
+      tags: [evaluation]
+      summary: Submit jury evaluation for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvaluationInput"
+      responses:
+        "200":
+          description: Evaluation submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+
+  /projects/{id}/evaluations:
+    get:
+      operationId: getProjectEvaluations
+      tags: [evaluation]
+      summary: Get all evaluations for a project
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Evaluations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Evaluation"
+
+  /hackathons/{hackathonId}/leaderboard:
+    get:
+      operationId: getLeaderboard
+      tags: [projects]
+      summary: Get ranked leaderboard for a hackathon
+      parameters:
+        - name: hackathonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ranked projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LeaderboardEntry"
+
+  # SUPPORT TICKETS
+  /tickets:
+    get:
+      operationId: listTickets
+      tags: [tickets]
+      summary: List support tickets
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: hackathonId
+          in: query
+          schema:
+            type: ["integer", "null"]
+      responses:
+        "200":
+          description: Tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+    post:
+      operationId: createTicket
+      tags: [tickets]
+      summary: Create a support ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  /tickets/{id}:
+    get:
+      operationId: getTicket
+      tags: [tickets]
+      summary: Get ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Ticket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+    patch:
+      operationId: updateTicket
+      tags: [tickets]
+      summary: Update ticket status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TicketUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  /tickets/{id}/claim:
+    post:
+      operationId: claimTicket
+      tags: [tickets]
+      summary: Mentor claims a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  /tickets/{id}/resolve:
+    post:
+      operationId: resolveTicket
+      tags: [tickets]
+      summary: Resolve a ticket
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+
+  # CHAT
+  /chat/rooms:
+    get:
+      operationId: listChatRooms
+      tags: [chat]
+      summary: List accessible chat rooms for current user
+      responses:
+        "200":
+          description: Chat rooms
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatRoom"
+
+  /chat/rooms/{roomId}/messages:
+    get:
+      operationId: listMessages
+      tags: [chat]
+      summary: Get messages in a chat room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+    post:
+      operationId: sendChatMessage
+      tags: [chat]
+      summary: Send a message in a chat room
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "201":
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatMessage"
+
+  # ANALYTICS
+  /analytics/hackathons/{hackathonId}/summary:
+    get:
+      operationId: getHackathonAnalytics
+      tags: [analytics]
+      summary: Get comprehensive analytics for a hackathon
+      parameters:
+        - name: hackathonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HackathonAnalytics"
+
+  /analytics/platform/summary:
+    get:
+      operationId: getPlatformAnalytics
+      tags: [analytics]
+      summary: Platform-wide analytics for admin
+      responses:
+        "200":
+          description: Platform summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformAnalytics"
+
+  # PORTFOLIOS
+  /portfolios/{hackathonId}:
+    get:
+      operationId: getPortfolio
+      tags: [portfolios]
+      summary: Get public portfolio for a completed hackathon
+      parameters:
+        - name: hackathonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Portfolio
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Portfolio"
+
+  /portfolios/{hackathonId}/generate:
+    post:
+      operationId: generatePortfolio
+      tags: [portfolios]
+      summary: Generate/regenerate public portfolio for a hackathon
+      parameters:
+        - name: hackathonId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Portfolio"
+
+  # AUDIT LOGS (Admin)
+  /admin/audit-logs:
+    get:
+      operationId: getAuditLogs
+      tags: [users]
+      summary: Get platform audit logs (admin only)
+      parameters:
+        - name: userId
+          in: query
+          schema:
+            type: ["integer", "null"]
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogListResponse"
+
+  /anthropic/conversations:
+    get:
+      operationId: listAnthropicConversations
+      tags: [anthropic]
+      summary: List all conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnthropicConversation"
+    post:
+      operationId: createAnthropicConversation
+      tags: [anthropic]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnthropicConversationInput"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnthropicConversation"
+  /anthropic/conversations/{id}:
+    get:
+      operationId: getAnthropicConversation
+      tags: [anthropic]
+      summary: Get conversation with messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnthropicConversationWithMessages"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnthropicError"
+    delete:
+      operationId: deleteAnthropicConversation
+      tags: [anthropic]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnthropicError"
+  /anthropic/conversations/{id}/messages:
+    get:
+      operationId: listAnthropicMessages
+      tags: [anthropic]
+      summary: List messages in a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnthropicMessage"
+    post:
+      operationId: sendAnthropicMessage
+      tags: [anthropic]
+      summary: Send a message and receive an AI response (SSE stream)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnthropicMessageInput"
+      responses:
+        "200":
+          description: SSE stream of assistant response chunks
+          content:
+            text/event-stream: {}
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    # AUTH
+    RegisterInput:
+      type: object
+      required: [email, password, name, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        role:
+          type: string
+          enum: [participant, organizer, mentor, jury, admin]
+        skills:
+          type: array
+          items:
+            type: string
+        bio:
+          type: string
+        timezone:
+          type: string
+        githubUrl:
+          type: string
+        linkedinUrl:
+          type: string
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [user, accessToken]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        accessToken:
+          type: string
+
+    User:
+      type: object
+      required: [id, email, name, role, isActive, createdAt]
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [participant, organizer, mentor, jury, admin]
+        isActive:
+          type: boolean
+        bio:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        skills:
+          type: array
+          items:
+            type: string
+        timezone:
+          type: ["string", "null"]
+        githubUrl:
+          type: ["string", "null"]
+        linkedinUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        bio:
+          type: string
+        avatarUrl:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        timezone:
+          type: string
+        githubUrl:
+          type: string
+        linkedinUrl:
+          type: string
+
+    UserListResponse:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    # HACKATHONS
+    Hackathon:
+      type: object
+      required: [id, title, description, status, startDate, endDate, maxTeamSize, minTeamSize, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, open, active, judging, completed, cancelled]
+        bannerUrl:
+          type: ["string", "null"]
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        registrationDeadline:
+          type: ["string", "null"]
+          format: date-time
+        maxTeamSize:
+          type: integer
+        minTeamSize:
+          type: integer
+        maxParticipants:
+          type: ["integer", "null"]
+        prizePool:
+          type: ["string", "null"]
+        techStack:
+          type: array
+          items:
+            type: string
+        participantCount:
+          type: integer
+        teamCount:
+          type: integer
+        projectCount:
+          type: integer
+        organizerId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    HackathonInput:
+      type: object
+      required: [title, description, startDate, endDate, maxTeamSize, minTeamSize]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        bannerUrl:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        registrationDeadline:
+          type: string
+          format: date-time
+        maxTeamSize:
+          type: integer
+        minTeamSize:
+          type: integer
+        maxParticipants:
+          type: integer
+        prizePool:
+          type: string
+        techStack:
+          type: array
+          items:
+            type: string
+
+    HackathonUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [draft, open, active, judging, completed, cancelled]
+        bannerUrl:
+          type: string
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        registrationDeadline:
+          type: string
+          format: date-time
+        maxTeamSize:
+          type: integer
+        minTeamSize:
+          type: integer
+        maxParticipants:
+          type: integer
+        prizePool:
+          type: string
+        techStack:
+          type: array
+          items:
+            type: string
+
+    HackathonListResponse:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Hackathon"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    AssignRoleInput:
+      type: object
+      required: [userId, role]
+      properties:
+        userId:
+          type: integer
+        role:
+          type: string
+          enum: [mentor, jury]
+
+    # MILESTONES
+    Milestone:
+      type: object
+      required: [id, hackathonId, title, dueDate, createdAt]
+      properties:
+        id:
+          type: integer
+        hackathonId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        dueDate:
+          type: string
+          format: date-time
+        isCompleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    MilestoneInput:
+      type: object
+      required: [title, dueDate]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+
+    # TEAMS
+    Team:
+      type: object
+      required: [id, hackathonId, name, createdAt]
+      properties:
+        id:
+          type: integer
+        hackathonId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        lookingForRoles:
+          type: array
+          items:
+            type: string
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamMember"
+        leaderId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    TeamMember:
+      type: object
+      required: [userId, role, joinedAt]
+      properties:
+        userId:
+          type: integer
+        name:
+          type: string
+        avatarUrl:
+          type: ["string", "null"]
+        role:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        joinedAt:
+          type: string
+          format: date-time
+
+    TeamInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        lookingForRoles:
+          type: array
+          items:
+            type: string
+
+    TeamUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        avatarUrl:
+          type: string
+        lookingForRoles:
+          type: array
+          items:
+            type: string
+
+    TeamInviteInput:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: integer
+        message:
+          type: string
+
+    TeamInvitation:
+      type: object
+      required: [id, teamId, userId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        teamId:
+          type: integer
+        teamName:
+          type: string
+        userId:
+          type: integer
+        message:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, accepted, declined]
+        createdAt:
+          type: string
+          format: date-time
+
+    InvitationResponse:
+      type: object
+      required: [accept]
+      properties:
+        accept:
+          type: boolean
+
+    # MATCHMAKING
+    MatchCandidate:
+      type: object
+      required: [user, compatibilityScore, matchedSkills]
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        compatibilityScore:
+          type: number
+          format: float
+        matchedSkills:
+          type: array
+          items:
+            type: string
+        complementaryRoles:
+          type: array
+          items:
+            type: string
+        timezoneCompatibility:
+          type: number
+          format: float
+
+    SwipeInput:
+      type: object
+      required: [targetUserId, direction]
+      properties:
+        targetUserId:
+          type: integer
+        direction:
+          type: string
+          enum: [left, right]
+
+    # PROJECTS
+    Project:
+      type: object
+      required: [id, hackathonId, teamId, title, status, createdAt]
+      properties:
+        id:
+          type: integer
+        hackathonId:
+          type: integer
+        teamId:
+          type: integer
+        teamName:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        readmeMarkdown:
+          type: ["string", "null"]
+        repoUrl:
+          type: ["string", "null"]
+        demoUrl:
+          type: ["string", "null"]
+        videoUrl:
+          type: ["string", "null"]
+        techStack:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [draft, submitted, under_review, winner, finalist]
+        totalScore:
+          type: ["number", "null"]
+          format: float
+        rank:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        submittedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    ProjectInput:
+      type: object
+      required: [hackathonId, teamId, title]
+      properties:
+        hackathonId:
+          type: integer
+        teamId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        readmeMarkdown:
+          type: string
+        repoUrl:
+          type: string
+        demoUrl:
+          type: string
+        videoUrl:
+          type: string
+        techStack:
+          type: array
+          items:
+            type: string
+
+    ProjectUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        readmeMarkdown:
+          type: string
+        repoUrl:
+          type: string
+        demoUrl:
+          type: string
+        videoUrl:
+          type: string
+        techStack:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [draft, submitted]
+
+    LeaderboardEntry:
+      type: object
+      required: [rank, project, totalScore]
+      properties:
+        rank:
+          type: integer
+        project:
+          $ref: "#/components/schemas/Project"
+        totalScore:
+          type: number
+          format: float
+        scoreBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScoreBreakdown"
+
+    ScoreBreakdown:
+      type: object
+      required: [criterionName, score, weight, weightedScore]
+      properties:
+        criterionName:
+          type: string
+        score:
+          type: number
+          format: float
+        weight:
+          type: number
+          format: float
+        weightedScore:
+          type: number
+          format: float
+
+    # EVALUATION
+    EvaluationCriterion:
+      type: object
+      required: [id, hackathonId, name, weight, maxScore]
+      properties:
+        id:
+          type: integer
+        hackathonId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        weight:
+          type: number
+          format: float
+        maxScore:
+          type: integer
+
+    EvaluationCriterionInput:
+      type: object
+      required: [name, weight, maxScore]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        weight:
+          type: number
+          format: float
+        maxScore:
+          type: integer
+
+    EvaluationInput:
+      type: object
+      required: [scores, feedback]
+      properties:
+        scores:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriterionScore"
+        feedback:
+          type: string
+
+    CriterionScore:
+      type: object
+      required: [criterionId, score]
+      properties:
+        criterionId:
+          type: integer
+        score:
+          type: number
+          format: float
+
+    Evaluation:
+      type: object
+      required: [id, projectId, juryId, totalScore, feedback, createdAt]
+      properties:
+        id:
+          type: integer
+        projectId:
+          type: integer
+        juryId:
+          type: integer
+        juryName:
+          type: string
+        scores:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriterionScore"
+        totalScore:
+          type: number
+          format: float
+        feedback:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # TICKETS
+    Ticket:
+      type: object
+      required: [id, hackathonId, authorId, title, status, createdAt]
+      properties:
+        id:
+          type: integer
+        hackathonId:
+          type: integer
+        authorId:
+          type: integer
+        authorName:
+          type: string
+        mentorId:
+          type: ["integer", "null"]
+        mentorName:
+          type: ["string", "null"]
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, claimed, resolved, closed]
+        priority:
+          type: string
+          enum: [low, medium, high]
+        createdAt:
+          type: string
+          format: date-time
+        resolvedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    TicketInput:
+      type: object
+      required: [hackathonId, title, description]
+      properties:
+        hackathonId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+
+    TicketUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, claimed, resolved, closed]
+        priority:
+          type: string
+          enum: [low, medium, high]
+
+    # CHAT
+    ChatRoom:
+      type: object
+      required: [id, name, type, hackathonId, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [team, announcement, support, general]
+        hackathonId:
+          type: integer
+        teamId:
+          type: ["integer", "null"]
+        lastMessage:
+          type: ["string", "null"]
+        lastMessageAt:
+          type: ["string", "null"]
+          format: date-time
+        unreadCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    ChatMessage:
+      type: object
+      required: [id, roomId, senderId, content, createdAt]
+      properties:
+        id:
+          type: integer
+        roomId:
+          type: integer
+        senderId:
+          type: integer
+        senderName:
+          type: string
+        senderAvatar:
+          type: ["string", "null"]
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ChatMessageInput:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+
+    # ANALYTICS
+    HackathonAnalytics:
+      type: object
+      required: [hackathonId, participantCount, teamCount, projectCount, submissionRate, milestoneProgress]
+      properties:
+        hackathonId:
+          type: integer
+        participantCount:
+          type: integer
+        teamCount:
+          type: integer
+        projectCount:
+          type: integer
+        submissionRate:
+          type: number
+          format: float
+        techStackDistribution:
+          type: array
+          items:
+            $ref: "#/components/schemas/DistributionItem"
+        registrationOverTime:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimeSeriesPoint"
+        milestoneProgress:
+          type: array
+          items:
+            $ref: "#/components/schemas/MilestoneProgress"
+        ticketStats:
+          $ref: "#/components/schemas/TicketStats"
+        evaluationProgress:
+          type: number
+          format: float
+
+    PlatformAnalytics:
+      type: object
+      required: [totalUsers, totalHackathons, totalProjects, activeHackathons]
+      properties:
+        totalUsers:
+          type: integer
+        totalHackathons:
+          type: integer
+        totalProjects:
+          type: integer
+        activeHackathons:
+          type: integer
+        usersByRole:
+          type: array
+          items:
+            $ref: "#/components/schemas/DistributionItem"
+        hackathonsByStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/DistributionItem"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+        growthOverTime:
+          type: array
+          items:
+            $ref: "#/components/schemas/TimeSeriesPoint"
+
+    DistributionItem:
+      type: object
+      required: [name, count]
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+        percentage:
+          type: number
+          format: float
+
+    TimeSeriesPoint:
+      type: object
+      required: [date, value]
+      properties:
+        date:
+          type: string
+        value:
+          type: integer
+
+    MilestoneProgress:
+      type: object
+      required: [title, dueDate, isCompleted]
+      properties:
+        title:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        isCompleted:
+          type: boolean
+
+    TicketStats:
+      type: object
+      required: [open, claimed, resolved]
+      properties:
+        open:
+          type: integer
+        claimed:
+          type: integer
+        resolved:
+          type: integer
+
+    ActivityItem:
+      type: object
+      required: [action, userId, userName, createdAt]
+      properties:
+        action:
+          type: string
+        userId:
+          type: integer
+        userName:
+          type: string
+        details:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    # PORTFOLIO
+    Portfolio:
+      type: object
+      required: [hackathonId, hackathonTitle, generatedAt, projects]
+      properties:
+        hackathonId:
+          type: integer
+        hackathonTitle:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/PortfolioProject"
+        totalParticipants:
+          type: integer
+        totalTeams:
+          type: integer
+
+    PortfolioProject:
+      type: object
+      required: [id, title, teamName, rank, totalScore]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        teamName:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamMember"
+        repoUrl:
+          type: ["string", "null"]
+        demoUrl:
+          type: ["string", "null"]
+        videoUrl:
+          type: ["string", "null"]
+        techStack:
+          type: array
+          items:
+            type: string
+        rank:
+          type: integer
+        totalScore:
+          type: number
+          format: float
+        badges:
+          type: array
+          items:
+            type: string
+
+    # ANTHROPIC AI
+    # (schemas added below under AnthropicConversation etc.)
+
+    # AUDIT LOGS
+    AuditLog:
+      type: object
+      required: [id, userId, userName, action, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        action:
+          type: string
+        details:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AnthropicConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+    AnthropicMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+    AnthropicConversationInput:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+    AnthropicMessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+    AnthropicConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnthropicMessage"
+      required:
+        - id
+        - title
+        - createdAt
+        - messages
+    AnthropicError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    AuditLogListResponse:
+      type: object
+      required: [data, total, page, limit]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
